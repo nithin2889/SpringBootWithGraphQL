@@ -14,6 +14,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.stream.Stream;
 import javax.annotation.PostConstruct;
+import lombok.val;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -34,14 +35,17 @@ public class GraphQLService {
   // load schema at application start up
   @PostConstruct
   private void loadSchema() throws IOException {
+    val schemaParser = new SchemaParser();
+    val schemaGenerator = new SchemaGenerator();
+
     // load books into the book repository
     loadDataIntoHSql();
     // get the schema
     File schemaFile = resource.getFile();
     // parse schema
-    TypeDefinitionRegistry typeRegistry = new SchemaParser().parse(schemaFile);
+    TypeDefinitionRegistry typeRegistry = schemaParser.parse(schemaFile);
     RuntimeWiring wiring = buildRuntimeWiring();
-    GraphQLSchema schema = new SchemaGenerator().makeExecutableSchema(typeRegistry, wiring);
+    GraphQLSchema schema = schemaGenerator.makeExecutableSchema(typeRegistry, wiring);
     graphQL = GraphQL.newGraphQL(schema).build();
   }
 
@@ -60,7 +64,11 @@ public class GraphQLService {
                 new String[] {"Peter", "Sam"},
                 "Jan 2015"),
             new Book(
-                "125", "Java 9 Programming", "Oreilly", new String[] {"Venkat", "Ram"}, "Dec 2016"))
+                "125",
+                "Java 9 Programming",
+                "Oreilly",
+                new String[] {"Venkat", "Ram"},
+                "Dec 2016"))
         .forEach(book -> bookRepository.save(book));
   }
 
